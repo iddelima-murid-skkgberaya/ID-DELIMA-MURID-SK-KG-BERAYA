@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carian Email DELIMA Murid</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .search-box {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result {
+            margin-top: 25px;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .result.success {
+            background: #d4edda;
+            border: 2px solid #c3e6cb;
+            display: block;
+        }
+
+        .result.error {
+            background: #f8d7da;
+            border: 2px solid #f5c6cb;
+            display: block;
+        }
+
+        .result.info {
+            background: #d1ecf1;
+            border: 2px solid #bee5eb;
+            display: block;
+        }
+
+        .result-content {
+            margin-top: 10px;
+        }
+
+        .result-content div {
+            margin: 8px 0;
+            color: #155724;
+        }
+
+        .email-display {
+            font-size: 18px;
+            font-weight: 600;
+            color: #155724;
+            margin-top: 10px;
+            word-break: break-all;
+        }
+
+        .error-text {
+            color: #721c24;
+            font-weight: 600;
+        }
+
+        .info-text {
+            color: #0c5460;
+        }
+
+        .loading {
+            text-align: center;
+            color: #667eea;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Carian Email DELIMA</h1>
+        <p class="subtitle">Masukkan No. Kad Pengenalan untuk dapatkan email</p>
+
+        <div class="search-box">
+            <label for="icNumber">No. Kad Pengenalan (tanpa tanda -)</label>
+            <input type="text" id="icNumber" placeholder="Contoh: 051234567890" maxlength="12">
+        </div>
+
+        <button onclick="searchEmail()" id="searchBtn">Cari Email</button>
+
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        // GANTI URL NI DENGAN URL APPS SCRIPT AWAK
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxGId2cGhK5djQVMrL5qV0zBt_eQChKjRslyt-rWweUK1crPhhpnc4LzMoKyQQlwL-IyQ/exec';
+
+        async function searchEmail() {
+            const icInput = document.getElementById('icNumber');
+            const icNumber = icInput.value.replace(/\D/g, '');
+            const resultDiv = document.getElementById('result');
+            const searchBtn = document.getElementById('searchBtn');
+
+            // Validation
+            if (!icNumber) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = '<div class="error-text">❌ Sila masukkan No. Kad Pengenalan</div>';
+                return;
+            }
+
+            if (icNumber.length !== 12) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = '<div class="error-text">❌ No. Kad Pengenalan mesti 12 digit</div>';
+                return;
+            }
+
+            // Loading state
+            searchBtn.disabled = true;
+            resultDiv.className = 'result info';
+            resultDiv.innerHTML = '<div class="info-text"><div class="loading">🔄 Mencari...</div></div>';
+
+            try {
+                // Fetch dari Google Sheets
+                const response = await fetch(`${APPS_SCRIPT_URL}?ic=${icNumber}`);
+                const data = await response.json();
+                
+                searchBtn.disabled = false;
+
+                if (data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        <div>✅ Email dijumpai!</div>
+                        <div class="result-content">
+                            <div><strong>Nama:</strong> ${data.nama}</div>
+                            <div><strong>Kelas:</strong> ${data.kelas}</div>
+                            <div class="email-display">${data.email}</div>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = '<div class="error-text">❌ Tiada rekod dijumpai untuk No. IC ini</div>';
+                }
+            } catch (error) {
+                searchBtn.disabled = false;
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = '<div class="error-text">❌ Ralat sambungan. Cuba lagi.</div>';
+                console.error('Error:', error);
+            }
+        }
+
+        // Allow Enter key to search
+        document.getElementById('icNumber').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchEmail();
+            }
+        });
+
+        // Auto-format IC (remove non-digits)
+        document.getElementById('icNumber').addEventListener('input', function(e) {
+            this.value = this.value.replace(/\D/g, '');
+        });
+    </script>
+</body>
+</html>
